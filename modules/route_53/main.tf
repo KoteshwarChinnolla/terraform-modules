@@ -24,8 +24,9 @@ resource "aws_route53_record" "www-dev" {
   type            = each.value.type
   ttl             = 301
   allow_overwrite = each.value.allow_overwrite
-  records         = each.value.records
+  records         = compact(each.value.records)
 }
+
 
 
 variable "domine_exists" {
