@@ -38,3 +38,41 @@ variable "domine_names" {
   type        = list(string)
   default     = []
 }
+
+variable "route_53_enable" {
+  description = "true if you like to add recards to route53"
+  type = bool
+  default = false
+}
+
+variable "domine_exists" {
+  type = bool
+}
+
+variable "domine_name" {
+  type = string
+}
+
+variable "parms_to_enter" {
+  description = "all the records to be entered into Route 53"
+  type = list(object({
+    name            = string
+    type            = string
+    allow_overwrite = bool
+    records         = list(string)
+  }))
+  default = [
+    {
+      name            = "www"
+      type            = "A"
+      allow_overwrite = true
+      records         = ["1.2.3.4"]
+    },
+    {
+      name            = "mail"
+      type            = "CNAME"
+      allow_overwrite = true
+      records         = ["mail.example.com"]
+    }
+  ]
+}

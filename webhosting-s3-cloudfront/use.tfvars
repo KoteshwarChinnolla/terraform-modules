@@ -5,3 +5,4 @@ enable_website=false
 versioning="Disabled"
 cloudfront_enabled=true
 domine_names=[]
+route_53_enable = false
