@@ -14,7 +14,10 @@ locals {
 }
 
 resource "aws_route53_record" "www-dev" {
-  for_each = { for r in var.parms_to_enter : "${r.name}-${r.type}" => r }
+  for_each = {
+    for r in var.parms_to_enter : "${r.name}-${r.type}" => r
+    if r.records != null && length(r.records) > 0
+  }
 
   zone_id         = local.zone_id
   name            = each.value.name
@@ -23,6 +26,7 @@ resource "aws_route53_record" "www-dev" {
   allow_overwrite = each.value.allow_overwrite
   records         = each.value.records
 }
+
 
 variable "domine_exists" {
   type = bool
