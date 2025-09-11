@@ -8,7 +8,6 @@ resource "aws_route53_zone" "my_domain_zone" {
   name  = var.domine_name
 }
 
-# Choose zone_id from whichever exists
 locals {
   zone_id = var.domine_exists ? data.aws_route53_zone.primary[0].zone_id : aws_route53_zone.my_domain_zone[0].zone_id
 }
@@ -27,7 +26,19 @@ resource "aws_route53_record" "www-dev" {
   records         = compact(each.value.records)
 }
 
+resource "aws_route53_record" "alias_record" {
+  count   = var.alias_record != null ? 1 : 0
+  zone_id = local.zone_id
+  name    = var.alias_record.name
+  type    = var.alias_record.type
+  allow_overwrite = var.alias_record.allow_overwrite
 
+  alias {
+    name                   = var.alias_record.alias.name
+    zone_id                = var.alias_record.alias.zone_id
+    evaluate_target_health = var.alias_record.alias.evaluate_target_health
+  }
+}
 
 variable "domine_exists" {
   type = bool
@@ -35,6 +46,21 @@ variable "domine_exists" {
 
 variable "domine_name" {
   type = string
+}
+
+variable "alias_record" {
+  description = "values of alias records such as cloud front or loadbalancers"
+  type = object({
+    name            = string
+    type            = string
+    allow_overwrite = bool
+    alias           = object({
+      name                   = string
+      zone_id                = string
+      evaluate_target_health = bool
+    })
+  })
+  default = null
 }
 
 variable "parms_to_enter" {
