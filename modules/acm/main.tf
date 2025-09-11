@@ -14,7 +14,7 @@ resource "aws_acm_certificate" "cert_default" {
 }
 
 resource "aws_acm_certificate" "cert_with_root" {
-  count             = var.root_domine != null ? 1 : 0
+  count             = var.root_domine != null && var.cirtificate_exists == false ? 1 : 0
   domain_name       = var.domine_name
   validation_method = var.validation_method
 
@@ -24,27 +24,29 @@ resource "aws_acm_certificate" "cert_with_root" {
   }
 }
 
-locals {
-  acm_certs = concat(
-    aws_acm_certificate.cert_default[*],
-    aws_acm_certificate.cert_with_root[*]
-  )
-}
-
 data "aws_route53_zone" "selected" {
-  name = var.root_domine != null ? var.root_domine : var.domine_name
+  name = coalesce(var.root_domine, var.domine_name)
 }
 
-# Create validation records for the first certificate in locals
 resource "aws_route53_record" "validation" {
-  for_each = length(local.acm_certs) > 0 ? {
-    for dvo in try(local.acm_certs[0].domain_validation_options, []) :
-    dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
+  for_each = merge(
+    {
+      for dvo in try(aws_acm_certificate.cert_default[0].domain_validation_options, []) :
+      dvo.domain_name => {
+        name   = dvo.resource_record_name
+        record = dvo.resource_record_value
+        type   = dvo.resource_record_type
+      }
+    },
+    {
+      for dvo in try(aws_acm_certificate.cert_with_root[0].domain_validation_options, []) :
+      dvo.domain_name => {
+        name   = dvo.resource_record_name
+        record = dvo.resource_record_value
+        type   = dvo.resource_record_type
+      }
     }
-  } : {}
+  )
 
   allow_overwrite = true
   name            = each.value.name
@@ -55,8 +57,11 @@ resource "aws_route53_record" "validation" {
 }
 
 resource "aws_acm_certificate_validation" "validation" {
-  count                   = length(local.acm_certs) > 0 ? 1 : 0
-  certificate_arn         = local.acm_certs[0].arn
+  certificate_arn = coalesce(
+    try(aws_acm_certificate.cert_default[0].arn, null),
+    try(aws_acm_certificate.cert_with_root[0].arn, null)
+  )
+
   validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
 
@@ -67,8 +72,13 @@ data "aws_acm_certificate" "issued" {
 }
 
 output "certificate_id" {
-  value = length(local.acm_certs) > 0 ? local.acm_certs[0].arn : data.aws_acm_certificate.issued.arn
+  value = coalesce(
+    try(aws_acm_certificate.cert_default[0].arn, null),
+    try(aws_acm_certificate.cert_with_root[0].arn, null),
+    data.aws_acm_certificate.issued.arn
+  )
 }
+
 
 variable "cirtificate_exists" {
   type        = bool
