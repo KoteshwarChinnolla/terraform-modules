@@ -1,8 +1,8 @@
-resource "aws_acm_certificate" "cert_default" {
-  count             = var.cirtificate_exists || var.root_domine != null ? 0 : 1
-  domain_name       = var.domine_name
+resource "aws_acm_certificate" "ROOT_CERT" {
+  count             = var.certificate_type == "ROOT_CERT" ? 1 : 0
+  domain_name       = var.domain_name
   validation_method = var.validation_method
-  subject_alternative_names = var.alternative_domine_names
+  subject_alternative_names = var.alternative_domain_names
 
   tags = {
     Environment = var.Environment
@@ -13,40 +13,32 @@ resource "aws_acm_certificate" "cert_default" {
   }
 }
 
-resource "aws_acm_certificate" "cert_with_root" {
-  count             = var.root_domine != null && var.cirtificate_exists == false ? 1 : 0
-  domain_name       = var.domine_name
+resource "aws_acm_certificate" "SUB_ROOT_CERT" {
+  count             = var.root_domain != null && var.certificate_type == "SUB_ROOT_CERT" ? 1 : 0
+  domain_name       = var.domain_name
   validation_method = var.validation_method
 
   validation_option {
-    domain_name       = var.domine_name
-    validation_domain = var.root_domine
+    domain_name       = var.domain_name
+    validation_domain = var.root_domain
   }
 }
 
 data "aws_route53_zone" "selected" {
-  name = coalesce(var.root_domine, var.domine_name)
+  name = coalesce(var.root_domain, var.domain_name)
 }
 
 resource "aws_route53_record" "validation" {
-  for_each = merge(
-    {
-      for dvo in try(aws_acm_certificate.cert_default[0].domain_validation_options, []) :
-      dvo.domain_name => {
-        name   = dvo.resource_record_name
-        record = dvo.resource_record_value
-        type   = dvo.resource_record_type
-      }
-    },
-    {
-      for dvo in try(aws_acm_certificate.cert_with_root[0].domain_validation_options, []) :
-      dvo.domain_name => {
-        name   = dvo.resource_record_name
-        record = dvo.resource_record_value
-        type   = dvo.resource_record_type
-      }
+  for_each = {
+    for dvo in flatten([
+      try(aws_acm_certificate.ROOT_CERT[0].domain_validation_options, []),
+      try(aws_acm_certificate.SUB_ROOT_CERT[0].domain_validation_options, [])
+    ]) : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
     }
-  )
+  }
 
   allow_overwrite = true
   name            = each.value.name
@@ -58,47 +50,44 @@ resource "aws_route53_record" "validation" {
 
 resource "aws_acm_certificate_validation" "validation" {
   certificate_arn = coalesce(
-    try(aws_acm_certificate.cert_default[0].arn, null),
-    try(aws_acm_certificate.cert_with_root[0].arn, null)
+    try(aws_acm_certificate.ROOT_CERT[0].arn, null),
+    try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null)
   )
 
   validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
 
 data "aws_acm_certificate" "issued" {
-  domain      = var.domine_name
+  count = var.certificate_type == "EXISTING" ? 1 : 0
+  
+  domain      = var.domain_name
   statuses    = ["ISSUED"]
   most_recent = true
 }
 
-output "certificate_id" {
-  value = coalesce(
-    try(aws_acm_certificate.cert_default[0].arn, null),
-    try(aws_acm_certificate.cert_with_root[0].arn, null),
-    data.aws_acm_certificate.issued.arn
-  )
+output "certificate_arn" {
+  value = var.certificate_type == "ROOT_CERT" ? try(aws_acm_certificate.ROOT_CERT[0].arn, null) : var.certificate_type == "SUB_ROOT_CERT" ? try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null) : var.certificate_type == "EXISTING" ? try(data.aws_acm_certificate.issued[0].arn, null) : null
 }
 
-
-variable "cirtificate_exists" {
-  type        = bool
-  description = "true to use already existing cirtificate, false to creat a new cirtificate"
-  default     = false
-}
-
-variable "root_domine" {
+variable "certificate_type" {
   type        = string
-  description = "mention if any root domine exists so that CNAMES are not needed to be inserted again"
+  description = "Certificate type: 'ROOT_CERT', 'SUB_ROOT_CERT', or 'EXISTING'"
+  default     = "EXISTING"
+}
+
+variable "root_domain" {
+  type        = string
+  description = "mention if any root domain exists so that CNAMES are not needed to be inserted again"
   default     = null
 }
 
-variable "domine_name" {
+variable "domain_name" {
   type        = string
-  description = "mention the name of the domine to which the cirtificate is for"
+  description = "mention the name of the domain to which the certificate is for"
   default     = null
 }
 
-variable "alternative_domine_names" {
+variable "alternative_domain_names" {
   type    = list(string)
   default = []
 }
