@@ -1,17 +1,17 @@
-resource "aws_acm_certificate" "ROOT_CERT" {
-  count             = var.certificate_type == "ROOT_CERT" ? 1 : 0
-  domain_name       = var.domain_name
-  validation_method = var.validation_method
-  subject_alternative_names = var.alternative_domain_names
+# resource "aws_acm_certificate" "ROOT_CERT" {
+#   count             = var.certificate_type == "ROOT_CERT" ? 1 : 0
+#   domain_name       = var.domain_name
+#   validation_method = var.validation_method
+#   subject_alternative_names = var.alternative_domain_names
 
-  tags = {
-    Environment = var.Environment
-  }
+#   tags = {
+#     Environment = var.Environment
+#   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
 resource "aws_acm_certificate" "SUB_ROOT_CERT" {
   count             = var.root_domain != null && var.certificate_type == "SUB_ROOT_CERT" ? 1 : 0
@@ -65,10 +65,7 @@ resource "aws_route53_record" "validation" {
 # }
 
 resource "aws_acm_certificate_validation" "validation" {
-  certificate_arn = coalesce(
-    try(aws_acm_certificate.ROOT_CERT[0].arn, null),
-    try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null)
-  )
+  certificate_arn = aws_acm_certificate.SUB_ROOT_CERT[0].arn
 
   validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
@@ -82,7 +79,7 @@ data "aws_acm_certificate" "issued" {
 }
 
 output "certificate_arn" {
-  value = var.certificate_type == "ROOT_CERT" ? try(aws_acm_certificate.ROOT_CERT[0].arn, null) : var.certificate_type == "SUB_ROOT_CERT" ? try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null) : var.certificate_type == "EXISTING" ? try(data.aws_acm_certificate.issued[0].arn, null) : null
+  value = var.certificate_type == "SUB_ROOT_CERT" ? try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null) : var.certificate_type == "EXISTING" ? try(data.aws_acm_certificate.issued[0].arn, null) : null
 }
 
 variable "certificate_type" {
