@@ -18,3 +18,8 @@ variable "bucket_arn" {
   description = "ARN of the S3 bucket used as origin for CloudFront"
   type        = string
 }
+
+variable "cirtificate_arn" {
+  type = string
+  description = "enter the cirtificate arn if exists else cloudfron cirtificate is chosen, SSL required for route53"
+}

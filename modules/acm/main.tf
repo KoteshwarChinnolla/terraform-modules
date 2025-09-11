@@ -60,9 +60,6 @@ output "certificate_id" {
   value = length(local.acm_certs) > 0 ? local.acm_certs[0].arn : data.aws_acm_certificate.issued.arn
 }
 
-
-
-
 variable "cirtificate_exists" {
   type = bool
   description = "true to use already existing cirtificate, false to creat a new cirtificate"

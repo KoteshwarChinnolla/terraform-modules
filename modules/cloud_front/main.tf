@@ -66,8 +66,13 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.cirtificate_arn == null ? true : false
+
+    acm_certificate_arn = var.cirtificate_arn != null ? var.cirtificate_arn : null
+    ssl_support_method  = var.cirtificate_arn != null ? "sni-only" : null
+    minimum_protocol_version = var.cirtificate_arn != null ? "TLSv1.2_2021" : null
   }
+
 }
 
 resource "aws_cloudfront_origin_access_control" "cloud_front_oac" {
