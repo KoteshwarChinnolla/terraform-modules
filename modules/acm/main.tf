@@ -29,6 +29,7 @@ data "aws_route53_zone" "selected" {
 }
 
 resource "aws_route53_record" "validation" {
+  depends_on = [ aws_acm_certificate.SUB_ROOT_CERT ]
   for_each = {
     for dvo in flatten([
       try(aws_acm_certificate.ROOT_CERT[0].domain_validation_options, []),
