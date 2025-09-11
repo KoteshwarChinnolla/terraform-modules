@@ -1,26 +1,15 @@
-# resource "aws_acm_certificate" "ROOT_CERT" {
-#   count             = var.certificate_type == "ROOT_CERT" ? 1 : 0
-#   domain_name       = var.domain_name
-#   validation_method = var.validation_method
-#   subject_alternative_names = var.alternative_domain_names
-
-#   tags = {
-#     Environment = var.Environment
-#   }
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-
-resource "aws_acm_certificate" "SUB_ROOT_CERT" {
-  count             = var.root_domain != null && var.certificate_type == "SUB_ROOT_CERT" ? 1 : 0
+resource "aws_acm_certificate" "ROOT_CERT" {
+  count             = var.certificate_type == "ROOT_CERT" ? 1 : 0
   domain_name       = var.domain_name
   validation_method = var.validation_method
+  subject_alternative_names = var.alternative_domain_names
 
-  validation_option {
-    domain_name       = var.domain_name
-    validation_domain = var.root_domain
+  tags = {
+    Environment = var.Environment
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -29,9 +18,9 @@ data "aws_route53_zone" "selected" {
 }
 
 resource "aws_route53_record" "validation" {
-  depends_on = [ aws_acm_certificate.SUB_ROOT_CERT ]
+  depends_on = [ aws_acm_certificate.ROOT_CERT ]
   for_each = {
-    for dvo in tolist(aws_acm_certificate.SUB_ROOT_CERT[0].domain_validation_options) : dvo.domain_name => {
+    for dvo in tolist(aws_acm_certificate.ROOT_CERT[0].domain_validation_options) : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -65,7 +54,7 @@ resource "aws_route53_record" "validation" {
 # }
 
 resource "aws_acm_certificate_validation" "validation" {
-  certificate_arn = aws_acm_certificate.SUB_ROOT_CERT[0].arn
+  certificate_arn = aws_acm_certificate.ROOT_CERT[0].arn
 
   validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
@@ -79,7 +68,7 @@ data "aws_acm_certificate" "issued" {
 }
 
 output "certificate_arn" {
-  value = var.certificate_type == "SUB_ROOT_CERT" ? try(aws_acm_certificate.SUB_ROOT_CERT[0].arn, null) : var.certificate_type == "EXISTING" ? try(data.aws_acm_certificate.issued[0].arn, null) : null
+  value = var.certificate_type == "ROOT_CERT" ? try(aws_acm_certificate.ROOT_CERT[0].arn, null) : var.certificate_type == "EXISTING" ? try(data.aws_acm_certificate.issued[0].arn, null) : null
 }
 
 variable "certificate_type" {
