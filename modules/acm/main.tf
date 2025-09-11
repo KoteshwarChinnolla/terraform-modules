@@ -30,6 +30,11 @@ locals {
   )
 }
 
+data "aws_route53_zone" "selected" {
+  name         = var.root_domine != null ? var.root_domine : var.domine_name
+  private_zone = true
+}
+
 resource "aws_route53_record" "example" {
   for_each = {
     for dvo in try(local.acm_certs[0].domain_validation_options, []) :
@@ -45,7 +50,7 @@ resource "aws_route53_record" "example" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.example.zone_id
+  zone_id         = aws_route53_zone.selected.zone_id
 }
 
 
