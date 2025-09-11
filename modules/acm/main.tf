@@ -31,10 +31,9 @@ locals {
 }
 
 resource "aws_route53_record" "example" {
-  count = length(local.acm_certs) > 0 ? 1 : 0
-
   for_each = {
-    for dvo in local.acm_certs[0].domain_validation_options : dvo.domain_name => {
+    for dvo in try(local.acm_certs[0].domain_validation_options, []) :
+    dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -48,6 +47,7 @@ resource "aws_route53_record" "example" {
   type            = each.value.type
   zone_id         = aws_route53_zone.example.zone_id
 }
+
 
 # Lookup existing cert if it already exists (ISSUED state)
 data "aws_acm_certificate" "issued" {
