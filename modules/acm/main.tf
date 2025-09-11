@@ -32,7 +32,7 @@ locals {
 
 data "aws_route53_zone" "selected" {
   name         = var.root_domine != null ? var.root_domine : var.domine_name
-  private_zone = true
+#   private_zone = true
 }
 
 resource "aws_route53_record" "example" {
@@ -68,25 +68,30 @@ output "certificate_id" {
 variable "cirtificate_exists" {
   type = bool
   description = "true to use already existing cirtificate, false to creat a new cirtificate"
+  default = false
 }
 
 variable "root_domine" {
   type = string
   description = "mection if any root domine exists so that CNAMES are not needed to be incerted again"
+  default = null
 }
 
 variable "domine_name" {
   type = string
   description = "mection the name of the domine to wich the cirtificate is for"
+  default = null
 }
 
 variable "validation_method" {
   type = string
   description = "It can be one of EMAIL or DNS"
+  default = "DNS"
 }
 
 
 variable "Environment" {
   type = string
   description = "it can be anything dev, test, prod .."
+  default = "prod"
 }
