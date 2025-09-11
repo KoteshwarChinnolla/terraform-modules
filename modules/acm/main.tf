@@ -29,12 +29,29 @@ data "aws_route53_zone" "selected" {
 }
 
 resource "aws_route53_record" "validation" {
+  count = var.root_domain != null && var.certificate_type == "SUB_ROOT_CERT" ? 1 : 0
   depends_on = [ aws_acm_certificate.SUB_ROOT_CERT ]
   for_each = {
-    for dvo in flatten([
-      try(aws_acm_certificate.ROOT_CERT[0].domain_validation_options, []),
-      try(aws_acm_certificate.SUB_ROOT_CERT[0].domain_validation_options, [])
-    ]) : dvo.domain_name => {
+    for dvo in tolist(aws_acm_certificate.SUB_ROOT_CERT[0].domain_validation_options) : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.selected.zone_id
+}
+
+resource "aws_route53_record" "validation" {
+  count = var.certificate_type == "ROOT_CERT" ? 1 : 0
+  depends_on = [ aws_acm_certificate.ROOT_CERT ]
+  for_each = {
+    for dvo in tolist(aws_acm_certificate.ROOT_CERT[0].domain_validation_options) : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
