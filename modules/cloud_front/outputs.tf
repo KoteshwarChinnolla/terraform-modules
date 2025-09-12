@@ -8,3 +8,8 @@ output "cloud_front_hosted_zone_id" {
   value = aws_cloudfront_distribution.s3_distribution.hosted_zone_id
   description = "hosted zone id"
 }
+
+output "cloud_front_distribution_id: {
+  value = aws_cloudfront_distribution.s3_distribution.id
+  description = "destribution id"
+}
