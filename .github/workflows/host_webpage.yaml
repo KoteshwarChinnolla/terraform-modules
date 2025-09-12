@@ -1,0 +1,72 @@
+name: Hosting webpage
+on:
+  push:
+    branches:
+      - xyz
+
+jobs:
+  host-webpage: 
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.0.11
+        terraform_wrapper: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run build
+      env:
+        CI: ""
+      run: npm run build
+
+    - name: move to the templates folder
+      run: mv build/ terraform/webhosting/
+
+    - name: Terraform Init
+      run: terraform -chdir=./terraform/webhosting init
+
+    - name: Terraform Apply
+      run: terraform -chdir=./terraform/webhosting apply -var-file=use.tfvars -auto-approve
+      
+
+    - name: echo output
+      run: terraform -chdir=./terraform/webhosting output
+
+    - name: test output
+      run: terraform -chdir=./terraform/webhosting output cloud_front_distribution_id | tr -d '"'
+      
+    - name: Get CloudFront Distribution ID
+      id: get_dist
+      run: |
+        dist_id=$(terraform -chdir=./terraform/webhosting output cloud_front_distribution_id | tr -d '"')
+        echo "DIST_ID=$dist_id" >> $GITHUB_ENV
+
+    - name: CloudFront Invalidation
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id $DIST_ID \
+          --paths "/*"
+
+# Required secrets
+
+# AWS_ACCESS_KEY_ID
+# AWS_SECRET_ACCESS_KEY
+# AWS_REGION

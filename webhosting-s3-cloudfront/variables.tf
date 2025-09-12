@@ -76,3 +76,41 @@ variable "parms_to_enter" {
     }
   ]
 }
+
+
+variable "certificate_type" {
+  type = string
+  description = "true to use already existing cirtificate, false to creat a new cirtificate"
+  default = false
+}
+
+variable "root_domine" {
+  type = string
+  description = "mection if any root domine exists so that CNAMES are not needed to be incerted again"
+  default = null
+}
+
+variable "acm_domine_name" {
+  type = string
+  description = "mection the name of the domine to wich the cirtificate is for"
+  default = null
+}
+
+variable "validation_method" {
+  type = string
+  description = "It can be one of EMAIL or DNS"
+  default = "DNS"
+}
+
+
+variable "Environment" {
+  type = string
+  description = "it can be anything dev, test, prod .."
+  default = "prod"
+}
+
+variable "cirtificate_arn" {
+  type = string
+  description = "enter the cirtificate arn if exists else cloudfron cirtificate is chosen, SSL required for route53"
+  default = null
+}

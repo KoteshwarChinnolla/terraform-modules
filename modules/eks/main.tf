@@ -46,7 +46,8 @@ resource "aws_iam_role_policy_attachment" "worker_policy_attachment" {
     for_each = toset([
         "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
         "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
-        "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+        "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
     ])
     policy_arn = each.value
     role       = aws_iam_role.worker_iam_role.name

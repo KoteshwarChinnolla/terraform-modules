@@ -1,0 +1,49 @@
+name: Daily Creation of EKS Cluster from Terraform
+on:
+  push:
+    branches:
+      - xyz
+  workflow_dispatch:
+
+jobs:
+  create-eks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.0.11
+
+      - name: Terraform Init
+        run: terraform -chdir=./terraform/eks_cluster init
+
+      - name: Terraform Apply
+        run: terraform -chdir=./terraform/eks_cluster apply -var-file=use.tfvars -auto-approve
+
+      - name: setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Adgesting kubectl context
+        run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Verify kubectl context
+        run: kubectl get nodes
+
+# required secrets to set
+
+# AWS_ACCESS_KEY_ID
+# AWS_SECRET_ACCESS_KEY
+# AWS_REGION
+# EKS_CLUSTER_NAME
