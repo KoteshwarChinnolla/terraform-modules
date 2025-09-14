@@ -40,6 +40,7 @@ variable "policy_name" {
 }
 
 locals {
+  sa_arn = 
   trust_relationship = {
     Version   = "2012-10-17"
     Statement = [
