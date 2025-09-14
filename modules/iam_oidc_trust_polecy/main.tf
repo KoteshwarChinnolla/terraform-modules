@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "inline" {
   count = length(var.statements) > 0 ? 1 : 0
 
   dynamic "statement" {
-    for_each = count.index == 0 ? [] : var.statements
+    for_each = var.statements
     content {
       actions   = statement.value.actions
       resources = statement.value.resources
@@ -105,3 +105,4 @@ output "policy_arn" {
   value       = length(aws_iam_policy.policy) > 0 ? aws_iam_policy.policy[0].arn : null
   description = "ARN of the IAM policy if created, else null"
 }
+
