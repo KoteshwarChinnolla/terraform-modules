@@ -23,11 +23,29 @@ locals {
 
 resource "aws_s3_object" "file_upload" {
   for_each     = local.folder_path != null ? toset(fileset(local.folder_path, "**/*")) : toset([])
-  bucket       = aws_s3_bucket.s3_bucket.id
-  key          = each.value
-  source       = "${local.folder_path}/${each.value}"
-  source_hash  = filemd5("${local.folder_path}/${each.value}")
-  content_type = "text/html"
+
+  bucket = aws_s3_bucket.s3_bucket.id
+  key    = each.value
+  source = "${local.folder_path}/${each.value}"
+
+  etag = filemd5("${local.folder_path}/${each.value}")
+
+  content_type = lookup(
+    {
+      ".html" = "text/html"
+      ".json" = "application/json"
+      ".css"  = "text/css"
+      ".js"   = "application/javascript"
+      ".map"  = "application/octet-stream"
+      ".png"  = "image/png"
+      ".jpg"  = "image/jpeg"
+      ".jpeg" = "image/jpeg"
+      ".svg"  = "image/svg+xml"
+    },
+    regex("\\.[^.]+$", each.value),
+    "binary/octet-stream"
+  )
+
   cache_control = "max-age=3600"
 }
 
