@@ -30,21 +30,7 @@ resource "aws_s3_object" "file_upload" {
 
   etag = filemd5("${local.folder_path}/${each.value}")
 
-  content_type = lookup(
-    {
-      ".html" = "text/html"
-      ".json" = "application/json"
-      ".css"  = "text/css"
-      ".js"   = "application/javascript"
-      ".map"  = "application/octet-stream"
-      ".png"  = "image/png"
-      ".jpg"  = "image/jpeg"
-      ".jpeg" = "image/jpeg"
-      ".svg"  = "image/svg+xml"
-    },
-    regex("\\.[^.]+$", each.value),
-    "binary/octet-stream"
-  )
+  content_type = "text/html"
 
   cache_control = "max-age=3600"
 }
