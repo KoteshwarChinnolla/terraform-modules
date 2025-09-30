@@ -17,6 +17,7 @@ if [[ "$install_docker" != "no" ]]; then
     sudo systemctl enable docker
     sudo systemctl start docker
     sudo usermod -aG docker ubuntu
+    newgrp docker
     echo "✅ Docker installed"
 else
     echo "⏩ Skipping Docker installation"
