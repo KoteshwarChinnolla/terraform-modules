@@ -89,3 +89,28 @@ command -v kubectl && kubectl version --client || echo "kubectl not installed"
 command -v kind && kind --version || echo "kind not installed"
 command -v aws && aws --version || echo "AWS CLI not installed"
 git --version
+
+
+##################################
+#########External Storage#########
+##################################
+sudo mkfs -t ext4 /dev/xvdbf   # making file system for mounted volume
+sudo mkdir -p /mnt/runner # creating sub directry uner mount
+sudo mount /dev/xvdbf /mnt/runner # mounting our route to it
+
+
+# to save from restarts
+sudo blkid /dev/xvdbf # copy  Uuid from here
+sudo nano /etc/fstab
+# replace uuid from from the one you compied and add it to the last line
+UUID=1234abcd-5678-90ef-1234-567890abcdef   /mnt/runner   ext4   defaults,nofail   0   2
+
+# creat the some directry in mount to store our system files to
+mkdir /mnt/runner/backend
+
+#move that file to the mounted directry
+sudo mv ~/backend-runner/actions-runner/_work /mnt/runner/backend/_work
+
+# sync for future changes
+ln -s /mnt/runner/backend/_work ~/backend-runner/actions-runner/_work
+
