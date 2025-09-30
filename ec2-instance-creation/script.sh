@@ -13,7 +13,7 @@ sudo apt-get install -y apt-transport-https ca-certificates curl unzip git
 # ------------------------
 read -p "Do you want Docker to be installed? (yes/no): " install_docker
 if [[ "$install_docker" != "no" ]]; then
-    sudo apt-get install -y docker.io
+    sudo apt-get install -y docker.io docker-buildx
     sudo systemctl enable docker
     sudo systemctl start docker
     sudo usermod -aG docker ubuntu
