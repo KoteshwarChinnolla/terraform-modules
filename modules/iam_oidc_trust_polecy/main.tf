@@ -33,6 +33,13 @@ variable "statements" {
   default = []
 }
 
+variable "managed_policy_arn" {
+  type        = string
+  default     = null
+  description = "Optional AWS-managed policy ARN to attach to the role"
+}
+
+
 variable "policy_name" {
   type        = string
   description = "IAM Policy name to create/attach"
@@ -93,6 +100,13 @@ resource "aws_iam_role_policy_attachment" "attach" {
   policy_arn = aws_iam_policy.policy[0].arn
 }
 
+resource "aws_iam_role_policy_attachment" "managed" {
+  count      = var.managed_policy_arn != null ? 1 : 0
+  role       = aws_iam_role.this.name
+  policy_arn = var.managed_policy_arn
+}
+
+
 output "role_name" {
   value = aws_iam_role.this.name
 }
@@ -105,6 +119,7 @@ output "policy_arn" {
   value       = length(aws_iam_policy.policy) > 0 ? aws_iam_policy.policy[0].arn : null
   description = "ARN of the IAM policy if created, else null"
 }
+
 
 
 
