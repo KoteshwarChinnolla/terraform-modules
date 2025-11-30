@@ -60,30 +60,39 @@ resource "aws_route_table_association" "public_route_table_association" {
 }
 
 resource "aws_eip" "nat" {
-  domain   = "vpc"
+  count  = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "nat_gateway" {
-  allocation_id = aws_eip.nat.id
+  count         = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
+  allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public_subnet[0].id
-    tags = {
-        Name = "${var.resource_name}_nat_gateway"
-    }
+
+  tags = {
+    Name = "${var.resource_name}_nat_gateway"
+  }
 }
 
+
 resource "aws_route_table" "private_route_table" {
+  count = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
   vpc_id = aws_vpc.main.id
-    route {
-        cidr_block = "0.0.0.0/0"
-        nat_gateway_id = aws_nat_gateway.nat_gateway.id
-    }
-    tags = {
-        Name = "${var.resource_name}_private_route_table"
-    }
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gateway[0].id
+  }
+
+  tags = {
+    Name = "${var.resource_name}_private_route_table"
+  }
 }
+
 
 resource "aws_route_table_association" "private_route_table_association" {
   count = length(var.private_subnet_cidr_blocks)
+
   subnet_id      = aws_subnet.private_subnet[count.index].id
-  route_table_id = aws_route_table.private_route_table.id
+  route_table_id = aws_route_table.private_route_table[0].id
 }
