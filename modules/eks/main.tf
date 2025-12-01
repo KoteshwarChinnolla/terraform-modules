@@ -60,7 +60,7 @@ resource "aws_eks_node_group" "work_nodes_eks" {
     node_group_name = each.key
     node_role_arn = aws_iam_role.worker_iam_role.arn
     subnet_ids = var.subnet_ids
-
+    ami_type = each.value.ami_type
     instance_types = each.value.instance_type
     capacity_type = each.value.capacity_type
 
