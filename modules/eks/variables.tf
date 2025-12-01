@@ -35,6 +35,7 @@ variable "kubernetes_version" {
 variable "node_group" {
   description = "Name of the EKS node group"
   type        = map(object({
+    ami_type      = string
     instance_type = list(string)
     capacity_type = string
     desired_size  = number
