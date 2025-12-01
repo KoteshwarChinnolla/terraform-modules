@@ -44,6 +44,7 @@ variable "node_group" {
   }))
   default     = {
     "eks-node-group" = {
+      ami_type = "AL2023_ARM_64_STANDARD"
       instance_type = ["t3.medium"]
       capacity_type = "ON_DEMAND"
       desired_size  = 2
