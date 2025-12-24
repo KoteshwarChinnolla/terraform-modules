@@ -25,7 +25,7 @@ resource "aws_instance" "example" {
   # Make script executable
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ${var.script_destination}"
+      "sudo ${var.script_destination}"
     ]
   }
 

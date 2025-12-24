@@ -73,7 +73,7 @@ if [[ "$install_helm" != "no" ]]; then
     echo "✅ Helm installed"
 else
 
-read -p "Do you want to install helm? (yes/no): " isthio_install
+read -p "Do you want to install istio? (yes/no): " isthio_install
 if [[ "$isthio_install" != "no" ]]; then
     curl -L https://istio.io/downloadIstio | sh -
     export PATH="$PATH:/home/ubuntu/istio-1.27.0/bin"
