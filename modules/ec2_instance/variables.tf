@@ -15,13 +15,13 @@ variable "key_name" {
   type        = string
 }
 
-variable "public_key_path" {
+variable "public_key" {
   description = "Path to the public SSH key (.pub)"
   type        = string
   default     = "~/.ssh/deployer-key.pub"
 }
 
-variable "private_key_path" {
+variable "private_key" {
   description = "Path to the private SSH key (.pem)"
   type        = string
   default     = "~/.ssh/deployer-key"
