@@ -7,7 +7,7 @@ resource "aws_instance" "example" {
   ami           = var.ami_id
   instance_type = var.instance_type
   key_name      = aws_key_pair.deployer.key_name
-
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
   # Common SSH connection for all provisioners
   connection {
     type        = "ssh"
@@ -68,4 +68,64 @@ resource "aws_security_group" "example" {
 
 data "http" "myip" {
   url = "https://checkip.amazonaws.com/"
+}
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "role" {
+  name               = "${var.instance_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+
+data "aws_iam_policy_document" "dynamic" {
+  for_each = var.iam_policies
+
+  dynamic "statement" {
+    for_each = each.value.statements
+    content {
+      effect    = statement.value.effect
+      actions   = statement.value.actions
+      resources = statement.value.resources
+    }
+  }
+}
+
+
+resource "aws_iam_policy" "dynamic" {
+  for_each = var.iam_policies
+
+  name = "${var.instance_name}-${each.key}"
+  policy = data.aws_iam_policy_document.dynamic[each.key].json
+}
+
+resource "aws_iam_role_policy_attachment" "dynamic" {
+  for_each = aws_iam_policy.dynamic
+
+  role       = aws_iam_role.role.name
+  policy_arn = each.value.arn
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.instance_name}-profile"
+  role = aws_iam_role.role.name
+}
+
+
+resource "aws_iam_role_policy_attachment" "managed" {
+  for_each = toset(var.managed_policy_arns)
+
+  role       = aws_iam_role.role.name
+  policy_arn = each.value
 }

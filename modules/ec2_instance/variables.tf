@@ -90,3 +90,38 @@ variable "execute" {
   type = bool
   default = false
 }
+
+variable "iam_policies" {
+  description = "Map of IAM policies to attach to EC2 role"
+  type = map(object({
+    statements = list(object({
+      effect    = string
+      actions   = list(string)
+      resources = list(string)
+    }))
+  }))
+  default = {}
+}
+
+# Example 
+# iam_policies = {
+#   s3_access = {
+#     statements = [
+#       {
+#         effect = "Allow"
+#         actions = [
+#           "s3:ListBucket"
+#         ]
+#         resources = [
+#           "arn:aws:s3:::my-private-bucket"
+#         ]
+#       }
+#     ]
+#   }
+# }
+
+variable "managed_policy_arns" {
+  type = list(string)
+  default = []
+}
+
