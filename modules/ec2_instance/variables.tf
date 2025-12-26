@@ -16,15 +16,13 @@ variable "key_name" {
 }
 
 variable "public_key" {
-  description = "Path to the public SSH key (.pub)"
+  description = "public key for ssh"
   type        = string
-  default     = "~/.ssh/deployer-key.pub"
 }
 
 variable "private_key" {
-  description = "Path to the private SSH key (.pem)"
+  description = "raw private key for ssh"
   type        = string
-  default     = "~/.ssh/deployer-key"
 }
 
 variable "ssh_user" {
