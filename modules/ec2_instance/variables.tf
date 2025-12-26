@@ -85,3 +85,8 @@ variable "ingress_rules" {
     }
   ]
 }
+
+variable "exicute" {
+  type = bool
+  default = false
+}
