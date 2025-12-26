@@ -2,7 +2,14 @@ provider "aws" {
   region = "us-east-1"
 }
 
+
 terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.70.0"
+    }
+  }
   backend "s3" {
     bucket = "hrms-anasol-frontend-terraform-backend"
     key    = "terraform/state"

@@ -14,18 +14,6 @@ variable "key_name" {
   type        = string
 }
 
-variable "public_key_path" {
-  description = "Path to the public SSH key (.pub)"
-  type        = string
-  default     = "~/.ssh/deployer-key.pub"
-}
-
-variable "private_key_path" {
-  description = "Path to the private SSH key (.pem)"
-  type        = string
-  default     = "~/.ssh/deployer-key"
-}
-
 variable "ssh_user" {
   description = "SSH user (depends on AMI: ubuntu/ec2-user)"
   type        = string
@@ -85,4 +73,34 @@ variable "ingress_rules" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   ]
+}
+
+variable "ebs_availability_zone" {
+  description = "Availability zone for the EBS volume"
+  type        = string
+  default     = "ap-south-2a"
+}
+
+variable "ebs_volume_size" {
+  description = "Size of the EBS volume in GB"
+  type        = number
+  default     = 20
+}
+
+variable "device_name" {
+  description = "type of ebs volume"
+  type = string
+  default = "/dev/xvdbf"
+}
+
+variable "iam_policies" {
+  description = "Map of IAM policies to attach to EC2 role"
+  type = map(object({
+    statements = list(object({
+      effect    = string
+      actions   = list(string)
+      resources = list(string)
+    }))
+  }))
+  default = {}
 }
