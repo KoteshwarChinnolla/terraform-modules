@@ -86,7 +86,7 @@ variable "ingress_rules" {
   ]
 }
 
-variable "exicute" {
+variable "execute" {
   type = bool
   default = false
 }
