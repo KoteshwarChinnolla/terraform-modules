@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+    }
+  }
+}
+
+
 resource "aws_acm_certificate" "SUB_ROOT_CERT" {
   count             = var.root_domain != null && var.certificate_type == "SUB_ROOT_CERT" ? 1 : 0
   domain_name       = var.domain_name
