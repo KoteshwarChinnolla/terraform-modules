@@ -60,12 +60,12 @@ resource "aws_route_table_association" "public_route_table_association" {
 }
 
 resource "aws_eip" "nat" {
-  count  = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
+  count  = var.enable_nat ? 1 : 0
   domain = "vpc"
 }
 
 resource "aws_nat_gateway" "nat_gateway" {
-  count         = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
+  count  = var.enable_nat ? 1 : 0
   allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public_subnet[0].id
 
@@ -79,9 +79,12 @@ resource "aws_route_table" "private_route_table" {
   count = length(var.private_subnet_cidr_blocks) > 0 ? 1 : 0
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_gateway[0].id
+  dynamic "route" {
+    for_each = var.enable_nat ? [1] : []
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = aws_nat_gateway.nat_gateway[0].id
+    }
   }
 
   tags = {

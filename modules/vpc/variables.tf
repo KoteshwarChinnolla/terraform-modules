@@ -33,3 +33,8 @@ variable "availability_zones_public" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_nat" {
+  type        = bool
+  default     = false
+}
