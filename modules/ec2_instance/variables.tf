@@ -10,6 +10,11 @@ variable "instance_type" {
   default     = "t2.micro"
 }
 
+variable "subnet_id" {
+  type        = string
+  default     = null
+}
+
 variable "key_name" {
   description = "Key pair name"
   type        = string

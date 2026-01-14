@@ -8,6 +8,8 @@ resource "aws_instance" "example" {
   instance_type = var.instance_type
   key_name      = aws_key_pair.deployer.key_name
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+  subnet_id     = var.subnet_id
+
   # Common SSH connection for all provisioners
   connection {
     type        = "ssh"
