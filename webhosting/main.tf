@@ -1,4 +1,9 @@
 provider "aws" {
+  region = "ap-south-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
   region = "us-east-1"
 }
 
@@ -11,9 +16,9 @@ terraform {
     }
   }
   backend "s3" {
-    bucket = "hrms-anasol-frontend-terraform-backend"
+    bucket = "cafe-frontend-terraform-backend"
     key    = "terraform/state"
-    region = "us-east-1"
+    region = "ap-south-1"
   }
 }
 
@@ -28,6 +33,10 @@ module "s3_bucket" {
 }
 
 module "cirtificate" {
+
+  providers = {
+    aws = aws.us_east_1
+  }
   source = "github.com/KoteshwarChinnolla/terraform-modules//modules/acm_SUB_ROOT_CERT"
   certificate_type = var.certificate_type
   root_domain = var.domine_name
@@ -60,7 +69,7 @@ module "route_53" {
 
   parms_to_enter = var.parms_to_enter
   alias_record = var.cloudfront_enabled ? {
-    name            = "techlife"
+    name            = "cafe"
     type            = "A"
     allow_overwrite = true
     alias = {
