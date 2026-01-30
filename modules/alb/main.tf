@@ -12,7 +12,6 @@ resource "aws_security_group" "this" {
       cidr_blocks = var.allowed_cidrs
     }
   }
-
   egress {
     protocol    = "-1"
     from_port   = 0
@@ -46,12 +45,84 @@ resource "aws_lb_target_group" "this" {
 }
 
 
-resource "aws_lb_listener" "this" {
-  for_each = { for p in var.listener_ports : tostring(p) => p }
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.this.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = var.https_required ? "redirect" : "fixed-response"
+
+    dynamic "redirect" {
+      for_each = var.https_required ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+
+    dynamic "fixed_response" {
+      for_each = var.https_required ? [] : [1]
+      content {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+  }
+}
+
+
+data "aws_route53_zone" "this" {
+  count        = var.https_required ? 1 : 0
+  name         = regex("([^.]+\\.[^.]+)$", var.domain_name)[0]
+  private_zone = false
+}
+
+
+resource "aws_acm_certificate" "this" {
+  count             = var.https_required ? 1 : 0
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.https_required ? {
+    for dvo in aws_acm_certificate.this[0].domain_validation_options :
+    dvo.domain_name => dvo
+  } : {}
+
+  zone_id = data.aws_route53_zone.this[0].zone_id
+  name    = each.value.resource_record_name
+  type    = each.value.resource_record_type
+  records = [each.value.resource_record_value]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "this" {
+  count = var.https_required ? 1 : 0
+
+  certificate_arn         = aws_acm_certificate.this[0].arn
+  validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
+}
+
+resource "aws_lb_listener" "https" {
+  count = var.https_required ? 1 : 0
+
+  depends_on = [
+    aws_acm_certificate_validation.this
+  ]
 
   load_balancer_arn = aws_lb.this.arn
-  port              = each.value
-  protocol          = var.protocol
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate_validation.this[0].certificate_arn
 
   default_action {
     type = "fixed-response"
@@ -64,11 +135,13 @@ resource "aws_lb_listener" "this" {
   }
 }
 
+
 resource "aws_lb_listener_rule" "routes" {
   for_each = var.routes
 
-  listener_arn = aws_lb_listener.this[tostring(var.listener_ports[0])].arn
-  priority     = each.value.priority
+  listener_arn = var.https_required? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn
+
+  priority = each.value.priority
 
   action {
     type             = "forward"

@@ -21,15 +21,6 @@ variable "allowed_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "target_port" {
-  type    = number
-  default = 80
-}
-
-variable "protocol" {
-  type    = string
-  default = "HTTP"
-}
 
 variable "health_check_path" {
   type    = string
@@ -44,6 +35,17 @@ variable "routes" {
     target_port  = number
     protocol     = string
   }))
+}
+
+
+variable "https_required" {
+  type    = bool
+  default = false
+}
+
+variable "domain_name" {
+  type    = string
+  default = null
 }
 
 # routes = {
