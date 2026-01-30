@@ -4,9 +4,9 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "cafe-rds-ecs-backend"
+    bucket = "jjr-rds-ecs-backend"
     key    = "terraform/state"
-    region = "ap-south-2"
+    region = "ap-south-1"
   }
 }
 
@@ -23,7 +23,7 @@ module "vpc" {
 }
 
 module "rds" {
-  source = "../rds"
+  source = "github.com/KoteshwarChinnolla/terraform-modules//modules/rds"
 
   resource_name = "${var.resource_name}-rds"
 
@@ -79,7 +79,7 @@ resource "aws_instance" "temp_ec2_instance" {
 
 
 module "asg" {
-  source = "../asg"
+  source = "github.com/KoteshwarChinnolla/terraform-modules//modules/asg"
 
   resource_name    = "${var.resource_name}-asg"
   vpc_id           = module.vpc.vpc_id
@@ -96,14 +96,13 @@ module "asg" {
 
 
 module "alb" {
-  source = "../alb"
+  source = "github.com/KoteshwarChinnolla/terraform-modules//modules/alb"
 
   name       = "${var.resource_name}-alb"
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnet_ids
 
   listener_ports   = [80, 443]
-  protocol         = "HTTP"
   allowed_cidrs    = ["0.0.0.0/0"]
   health_check_path = var.alb_health_check_path
 
@@ -116,11 +115,13 @@ module "alb" {
       protocol      = "HTTP"
     }
   }
+  https_required = var.https_required
+  domain_name = var.domain_name
 }
 
 
 module "ecs" {
-  source = "../ecs"
+  source = "github.com/KoteshwarChinnolla/terraform-modules//modules/ecs"
 
   resource_name = var.resource_name
   aws_region    = var.aws_region
@@ -147,6 +148,7 @@ module "ecs" {
         SPRING_DATASOURCE_URL="jdbc:postgresql://${module.rds.rds_endpoint}/test_db"
         SPRING_DATASOURCE_USERNAME=var.db_username
         SPRING_DATASOURCE_PASSWORD=var.db_password
+        SPRING_DATA_REDIS_TIMEOUT=60000
       })
       create_repo      = v.image.create_repo
       autoscaling = {
