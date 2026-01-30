@@ -56,12 +56,16 @@ resource "aws_launch_template" "ecs_ec2" {
   name_prefix   = "${var.resource_name}-ecs-node-lt-"
   image_id      = data.aws_ssm_parameter.ecs_node_ami.value
   instance_type = var.instance_type
-  key_name = var.instance_key
+  key_name      = var.instance_key
+
   instance_market_options {
     market_type = var.market_type
   }
 
-  vpc_security_group_ids = [aws_security_group.ecs_node_sg.id]
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.ecs_node_sg.id]
+  }
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.ecs_node.arn

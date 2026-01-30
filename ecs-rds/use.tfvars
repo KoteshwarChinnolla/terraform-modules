@@ -66,7 +66,7 @@ services = {
     scaling = {
       desired = 1
       min     = 1
-      max     = 2
+      max     = 1
       cpu     = 75
       memory  = 75
     }
