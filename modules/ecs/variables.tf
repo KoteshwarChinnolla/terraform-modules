@@ -56,3 +56,8 @@ variable "exec_role_managed_policy_arns" {
   type        = set(string)
   description = "Managed IAM policies to attach to ECS task role"
 }
+
+variable "task_network_mode" {
+  type = string
+  default = "bridge"
+}

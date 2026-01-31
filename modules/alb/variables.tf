@@ -48,6 +48,10 @@ variable "domain_name" {
   default = null
 }
 
+variable "target_type" {
+  type = string
+  default = "instance"
+}
 # routes = {
 #   cafe = {
 #     priority     = 10

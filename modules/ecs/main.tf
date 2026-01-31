@@ -115,7 +115,7 @@ resource "aws_ecs_task_definition" "this" {
   family             = "${var.resource_name}-${each.key}"
   task_role_arn      = aws_iam_role.task.arn
   execution_role_arn = aws_iam_role.exec.arn
-  network_mode       = "awsvpc"
+  network_mode       = var.task_network_mode
   cpu                = each.value.cpu
   memory             = each.value.memory
 
