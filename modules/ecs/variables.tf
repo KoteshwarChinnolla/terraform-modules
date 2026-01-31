@@ -58,6 +58,11 @@ variable "exec_role_managed_policy_arns" {
 }
 
 variable "task_network_mode" {
-  type = string
+  type    = string
   default = "bridge"
+
+  validation {
+    condition     = contains(["bridge", "awsvpc", "host"], var.task_network_mode)
+    error_message = "task_network_mode must be one of: bridge, awsvpc, host"
+  }
 }
