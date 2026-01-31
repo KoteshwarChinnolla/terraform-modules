@@ -44,6 +44,7 @@ resource "aws_db_instance" "this" {
   identifier             = var.resource_name
   instance_class         = var.instance_class
   allocated_storage      = var.allocated_storage
+  max_allocated_storage  = var.max_allocated_storage
   engine                 = var.engine
   engine_version         = var.engine_version
 
@@ -54,13 +55,17 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.this.id]
   parameter_group_name  = aws_db_parameter_group.this.name
 
-  publicly_accessible = var.publicly_accessible
-  skip_final_snapshot = var.skip_final_snapshot
+  publicly_accessible    = var.publicly_accessible
+  skip_final_snapshot    = var.skip_final_snapshot
+
+  backup_retention_period = var.db_retention_period
+  backup_window           = var.backup_window
 
   tags = {
     Name = var.resource_name
   }
 }
+
 
 
 # provider "postgresql" {

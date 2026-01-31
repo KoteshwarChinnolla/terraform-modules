@@ -84,3 +84,22 @@ variable "enable_postgres_management" {
   default     = false
 }
 
+variable "max_allocated_storage" {
+  type = number
+  default = 100
+}
+
+variable "backup_retention_period" {
+  type = number
+  default = 5
+}
+
+variable "backup_window" {
+  type = string
+  default = "03:00-04:00"
+}
+
+variable "db_retention_period" {
+  type = number
+  default = 7
+}
