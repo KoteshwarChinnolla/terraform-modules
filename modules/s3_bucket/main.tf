@@ -30,7 +30,23 @@ resource "aws_s3_object" "file_upload" {
 
   etag = filemd5("${local.folder_path}/${each.value}")
 
-  content_type = "text/html"
+  # content_type = "text/html"
+  content_type = lookup({
+    html = "text/html"
+    js   = "application/javascript"
+    mjs  = "application/javascript"
+    css  = "text/css"
+    json = "application/json"
+    png  = "image/png"
+    jpg  = "image/jpeg"
+    jpeg = "image/jpeg"
+    svg  = "image/svg+xml"
+    ico  = "image/x-icon"
+    wasm = "application/wasm"
+    txt  = "text/plain"
+    map  = "application/json"
+  }, lower(element(split(".", each.value), length(split(".", each.value)) - 1)), "application/octet-stream")
+
 
   cache_control = "max-age=3600"
 }
