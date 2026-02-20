@@ -27,6 +27,10 @@ resource "aws_lb" "this" {
   security_groups    = [aws_security_group.this.id]
 }
 
+locals {
+  create_certificate = var.https_required && var.certificate_arn == null
+}
+
 resource "aws_lb_target_group" "this" {
   for_each = var.routes
 
@@ -75,14 +79,14 @@ resource "aws_lb_listener" "http" {
 
 
 data "aws_route53_zone" "this" {
-  count        = var.https_required ? 1 : 0
+  count             = local.create_certificate ? 1 : 0
   name         = regex("([^.]+\\.[^.]+)$", var.domain_name)[0]
   private_zone = false
 }
 
 
 resource "aws_acm_certificate" "this" {
-  count             = var.https_required ? 1 : 0
+  count             = local.create_certificate ? 1 : 0
   domain_name       = var.domain_name
   validation_method = "DNS"
 
@@ -92,7 +96,7 @@ resource "aws_acm_certificate" "this" {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  for_each = var.https_required ? {
+  for_each = local.create_certificate ? {
     for dvo in aws_acm_certificate.this[0].domain_validation_options :
     dvo.domain_name => dvo
   } : {}
@@ -105,24 +109,31 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "this" {
-  count = var.https_required ? 1 : 0
+  count = local.create_certificate ? 1 : 0
 
   certificate_arn         = aws_acm_certificate.this[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
 
+locals {
+  effective_certificate_arn = try(
+    var.certificate_arn,
+    aws_acm_certificate_validation.this[0].certificate_arn
+  )
+}
+
 resource "aws_lb_listener" "https" {
   count = var.https_required ? 1 : 0
 
-  depends_on = [
-    aws_acm_certificate_validation.this
-  ]
+  depends_on = local.create_certificate
+    ? [aws_acm_certificate_validation.this]
+    : []
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.this[0].certificate_arn
+  certificate_arn   = local.effective_certificate_arn
 
   default_action {
     type = "fixed-response"
@@ -154,3 +165,4 @@ resource "aws_lb_listener_rule" "routes" {
     }
   }
 }
+
