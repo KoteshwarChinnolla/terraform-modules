@@ -125,9 +125,6 @@ locals {
 resource "aws_lb_listener" "https" {
   count = var.https_required ? 1 : 0
 
-  depends_on = local.create_certificate
-    ? [aws_acm_certificate_validation.this]
-    : []
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443
@@ -165,4 +162,5 @@ resource "aws_lb_listener_rule" "routes" {
     }
   }
 }
+
 
