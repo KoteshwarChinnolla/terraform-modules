@@ -52,6 +52,13 @@ variable "target_type" {
   type = string
   default = "instance"
 }
+
+variable "certificate_arn" {
+  type        = string
+  description = "Existing ACM certificate ARN to use for HTTPS listener. If null, a new certificate will be created."
+  default     = null
+}
+
 # routes = {
 #   cafe = {
 #     priority     = 10
@@ -67,3 +74,4 @@ variable "target_type" {
 #     protocol     = "HTTP"
 #   }
 # }
+
