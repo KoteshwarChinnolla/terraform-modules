@@ -15,7 +15,7 @@ variable "instance_key" {
 
 variable "market_type" {
   type    = string
-  default = "spot"
+  default = ""on-demand"
 }
 
 variable "min_size" { type = number }
